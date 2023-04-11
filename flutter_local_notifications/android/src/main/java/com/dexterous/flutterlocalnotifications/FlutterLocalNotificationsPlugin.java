@@ -1274,6 +1274,8 @@ public class FlutterLocalNotificationsPlugin
 //          Toast.makeText(context, "Thanks for confirming that you have taken your medicine", Toast.LENGTH_SHORT).show();
 //        }
 //      });
+    }else{
+      Log.d("Cookie", "Not available");
     }
 
     if (notificationDetails.tag != null) {
