@@ -1239,6 +1239,8 @@ public class FlutterLocalNotificationsPlugin
         JSONObject payload = new JSONObject(notificationDetails.payload);
         if(payload.getString("type").equals("poster")){
           showAmbulanceReminder(context,notificationDetails,payload.getString("recordId"));
+        }else{
+          Log.d("Payload", "Payload is not equal to poster");
         }
       } catch (JSONException e) {
         Log.e("Exception on thread ", e.getMessage());
@@ -1275,7 +1277,9 @@ public class FlutterLocalNotificationsPlugin
 //        }
 //      });
     }else{
-      Log.d("Cookie", "Not available");
+
+        Log.d("Payload", "Payload is not coming");
+
     }
 
     if (notificationDetails.tag != null) {
@@ -1413,6 +1417,8 @@ public class FlutterLocalNotificationsPlugin
         }
       };
       queue.add(request);
+    }else{
+      Log.e("Cookie", "Cookie is not coming");
     }
 
   }
