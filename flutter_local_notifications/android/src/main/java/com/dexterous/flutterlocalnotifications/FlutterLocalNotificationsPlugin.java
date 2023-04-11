@@ -38,9 +38,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import androidx.annotation.Keep;
@@ -55,6 +54,14 @@ import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.IconCompat;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.JsonRequest;
+import com.android.volley.toolbox.Volley;
 import com.dexterous.flutterlocalnotifications.isolate.IsolatePreferences;
 import com.dexterous.flutterlocalnotifications.models.BitmapSource;
 import com.dexterous.flutterlocalnotifications.models.DateTimeComponents;
@@ -84,9 +91,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -98,6 +110,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.loader.FlutterLoader;
@@ -1216,49 +1230,50 @@ public class FlutterLocalNotificationsPlugin
     NotificationManagerCompat notificationManagerCompat = getNotificationManager(context);
 
 
-    if(notificationDetails.payload !=null && notificationDetails.payload.contains("PR-VKP")){
-      WindowManager.LayoutParams layoutParams =  new WindowManager.LayoutParams(
-              ViewGroup.LayoutParams.MATCH_PARENT,
-              ViewGroup.LayoutParams.WRAP_CONTENT,
-              WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-              WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-              PixelFormat.TRANSPARENT);
+    if(notificationDetails.payload !=null){
 
+//      && notificationDetails.payload.contains("AMB-VKP")
+//      showAmbulanceReminder();
 
-      View inflater =  LayoutInflater.from(context).inflate(R.layout.windows_overlay,null);
-      WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-      ImageButton btn = inflater.findViewById(R.id.closeWindow);
-      TextView medicinesList = inflater.findViewById(R.id.medicine);
-
-      manager.addView(inflater,layoutParams);
-
-
-      MediaPlayer player = MediaPlayer.create(context,R.raw.ringtone);
-      player.setLooping(true);
-      player.start();
-      Button confirmAll = inflater.findViewById(R.id.confirm);
-      medicinesList.setText(notificationDetails.body);
-      btn.setOnClickListener(new View.OnClickListener(){
-        @Override
-        public void onClick(View view) {
-          player.stop();
-//          cancel(context,notificationDetails);
-
-          manager.removeView(inflater);
-
+      try{
+        JSONObject payload = new JSONObject(notificationDetails.payload);
+        if(payload.getString("type").equals("poster")){
+          showAmbulanceReminder(context,notificationDetails,payload.getString("recordId"));
         }
-      });
-      confirmAll.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-          player.stop();
-          manager.removeView(inflater);
+      } catch (JSONException e) {
+        Log.e("Exception on thread ", e.getMessage());
+      }
 
-            cancel(context,notificationDetails);
 
-          Toast.makeText(context, "Thanks for confirming that you have taken your medicine", Toast.LENGTH_SHORT).show();
-        }
-      });
+
+
+
+
+
+
+//      Button confirmAll = inflater.findViewById(R.id.confirm);
+//      medicinesList.setText(notificationDetails.body);
+//      btn.setOnClickListener(new View.OnClickListener(){
+//        @Override
+//        public void onClick(View view) {
+//          player.stop();
+////          cancel(context,notificationDetails);
+//
+//          manager.removeView(inflater);
+//
+//        }
+//      });
+//      confirmAll.setOnClickListener(new View.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//          player.stop();
+//          manager.removeView(inflater);
+//
+//            cancel(context,notificationDetails);
+//
+//          Toast.makeText(context, "Thanks for confirming that you have taken your medicine", Toast.LENGTH_SHORT).show();
+//        }
+//      });
     }
 
     if (notificationDetails.tag != null) {
@@ -1269,6 +1284,182 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
+  private static void showAmbulanceReminder(Context ctx, NotificationDetails details, String recordId){
+
+
+
+    SharedPreferences preferences  = ctx.getSharedPreferences("FlutterSharedPreferences",ctx.MODE_PRIVATE);
+    String cookies = preferences.getString("cookie","");
+
+    if(!cookies.equals("")) {
+      final RequestQueue queue = Volley.newRequestQueue(ctx);
+      final String url = "https://app.hospinity.com/admin/ambulance/order/details?recordId=" + recordId;
+      JsonRequest<JSONObject> request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+        @Override
+        public void onResponse(JSONObject response) {
+          Log.d("response", response.toString());
+
+          HashMap res = new Gson().fromJson(response.toString(),HashMap.class);
+
+          try{
+            if(response.getInt("responseCode")== 109) {
+              WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT,
+                      ViewGroup.LayoutParams.WRAP_CONTENT,
+                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                      WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                      PixelFormat.TRANSPARENT);
+
+              View inflater = LayoutInflater.from(ctx).inflate(R.layout.ambulance_reminder, null);
+              WindowManager manager = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);
+              manager.addView(inflater, layoutParams);
+
+              MediaPlayer player = MediaPlayer.create(ctx, R.raw.ringtone);
+//          player.setLooping(true);
+              player.start();
+
+
+
+              TextView bookedBy = inflater.findViewById(R.id.textView2);
+              TextView bookedOn = inflater.findViewById(R.id.textView5);
+              TextView bookingTime = inflater.findViewById(R.id.textView6);
+              TextView pickUp = inflater.findViewById(R.id.textView8);
+              ProgressBar pgr  = inflater.findViewById(R.id.progressBar);
+              TextView progressValue = inflater.findViewById(R.id.textView3);
+
+             HashMap data = (HashMap) res.get("data");
+             HashMap result = (HashMap) data.get("result");
+
+
+             int pickUpDateTime =0;
+             if( result.get("pickUpDateTime")!=null){
+               pickUpDateTime = (int) result.get("pickUpDateTime");
+
+             }
+             bookedBy.setText(result.get("userName").toString());
+             pickUp.setText(result.get("fragmentedAddress").toString());
+
+              SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS");
+
+              // Create a calendar object that will convert the date and time value in milliseconds to date.
+              Calendar calendar = Calendar.getInstance();
+              calendar.setTimeInMillis(pickUpDateTime);
+              String format =  formatter.format(calendar.getTime());
+              bookedOn.setText(pickUpDateTime == 0? "N/A" : format.split(" ")[0] );
+              bookingTime.setText(pickUpDateTime == 0? "N/A" : format.split(" ")[1] );
+              Button acceptBooking = inflater.findViewById(R.id.button);
+              Button cancelBooking = inflater.findViewById(R.id.button2);
+              final int[] pgrVal = {30};
+              final int[] p = {0};
+              pgr.setMax(30);
+              new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                  if(pgrVal[0]>0) {
+                    pgrVal[0] -= 1;
+                    p[0] +=1;
+                    progressValue.setText(p[0] + "");
+                    pgr.setProgress(p[0]);
+                  }
+                }
+              },1000);
+              acceptBooking.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                  if (player.isPlaying()) {
+                    player.stop();
+                  }
+
+                  cancel(ctx,details);
+                  manager.removeView(inflater);
+                  cancelOrAcceptAmbulanceBooking(ctx, recordId, "accept", cookies);
+                }
+              });
+
+              cancelBooking.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                  if (player.isPlaying()) {
+                    player.stop();
+                  }
+                  cancel(ctx,details);
+                  manager.removeView(inflater);
+
+                  cancelOrAcceptAmbulanceBooking(ctx, recordId, "cancelled", cookies);
+
+
+                }
+
+              });
+            }
+          } catch (JSONException e) {
+            Log.e("Exception",e.getMessage());
+          }
+        }
+
+      }, new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+          Log.d("Api Call Error", error.getMessage());
+        }
+      }) {
+        @Override
+        public Map<String, String> getHeaders() throws AuthFailureError {
+          Map<String, String> header = new HashMap<>();
+          header.put("cookie", cookies);
+          return header;
+        }
+      };
+      queue.add(request);
+    }
+
+  }
+
+
+  private  static  void cancelOrAcceptAmbulanceBooking(Context ctx, String recordId,String status, String cookies){
+    String api = "https://app.hospinity.com/admin/ambulance/booking/update";
+    final RequestQueue queue = Volley.newRequestQueue(ctx);
+   try{
+     JSONObject body = new JSONObject();
+     body.put("status", status);
+     body.put("recordId",recordId);
+
+     JsonRequest<JSONObject> request = new JsonObjectRequest( api, new Response.Listener<JSONObject>() {
+       @Override
+       public void onResponse(JSONObject response) {
+          Log.d("AcceptReject",response.toString());
+       }
+     }, new Response.ErrorListener() {
+       @Override
+       public void onErrorResponse(VolleyError error) {
+          Log.e("Error",error.getMessage());
+       }
+     }){
+       @Override
+       public Map<String, String> getHeaders() throws AuthFailureError {
+         Map<String, String> header = new HashMap<>();
+         header.put("cookie", cookies);
+         return header;
+       }
+
+       @Override
+       public byte[] getBody() {
+        try{
+          String requestBody = body.toString();
+          return requestBody.getBytes("utf-8") == null? null: requestBody.getBytes("utf-8");
+        } catch (UnsupportedEncodingException e) {
+         return super.getBody();
+        }
+       }
+     };
+
+     queue.add(request);
+
+   } catch (JSONException e) {
+     Log.e("Exception", e.getMessage());
+   }
+
+  }
   private  static void  cancel(Context context, NotificationDetails details){
     Intent intent = new Intent(context, ScheduledNotificationReceiver.class);
     PendingIntent pendingIntent = getBroadcastPendingIntent(context, details.id, intent);
