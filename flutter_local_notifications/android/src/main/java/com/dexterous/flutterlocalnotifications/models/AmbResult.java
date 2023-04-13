@@ -16,7 +16,7 @@ public class AmbResult {
     private float payment;
     private String _id;
     ReceiverId ReceiverIdObject;
-    private int pickUpDateTime;
+    private long pickUpDateTime;
     UserId UserIdObject;
     private int updatedAt;
     private int createdAt;
@@ -85,7 +85,7 @@ public class AmbResult {
         return ReceiverIdObject;
     }
 
-    public int getPickUpDateTime() {
+    public long getPickUpDateTime() {
         return pickUpDateTime;
     }
 

@@ -1340,17 +1340,14 @@ public class FlutterLocalNotificationsPlugin
                 AmbResult result = data.getResult();
 
 
-                int pickUpDateTime = 0;
-                if (result.getPickUpDateTime() > 0) {
-                  pickUpDateTime = (int) result.getPickUpDateTime();
+                long pickUpDateTime = result.getPickUpDateTime();
 
-                }
                 bookedBy.setText(result.getUserName().toString());
                 pickUp.setText(result.getFragmentedAddress().toString());
                 Date date = new Date(pickUpDateTime*1000);
                 SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS", Locale.getDefault());
                 formatter.setTimeZone(TimeZone.getDefault());
-
+                Log.d("PickUpAt",result.getPickUpDateTime()+"" );
                 String format = formatter.format(date);
                 bookedOn.setText(pickUpDateTime == 0 ? "N/A" : format.split(" ")[0]);
                 bookingTime.setText(pickUpDateTime == 0 ? "N/A" : format.split(" ")[1]);
