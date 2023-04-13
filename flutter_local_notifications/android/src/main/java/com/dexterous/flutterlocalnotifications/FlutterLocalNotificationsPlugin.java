@@ -1335,7 +1335,7 @@ public class FlutterLocalNotificationsPlugin
                 TextView pickUp = inflater.findViewById(R.id.textView8);
 //                ProgressBar pgr = inflater.findViewById(R.id.progressBar);
 //                TextView progressValue = inflater.findViewById(R.id.textView3);
-
+//
 
                 AmbResult result = data.getResult();
 
@@ -1363,8 +1363,8 @@ public class FlutterLocalNotificationsPlugin
 //                      pgrVal[0] -= 1;
 //                      p[0] += 1;
 //
-//                      Activity activity = (Activity) ctx.getApplicationContext().;
-//                      activity.runOnUiThread(new Runnable() {
+//
+//                      mainActivity.runOnUiThread(new Runnable() {
 //                        @Override
 //                        public void run() {
 //                          progressValue.setText(p[0]+"");
