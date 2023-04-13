@@ -81,7 +81,7 @@
                 android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="@+id/textView4"
                 app:layout_constraintTop_toBottomOf="@+id/textView4"
-                app:src="@drawable/baseline_calendar_today_24" />
+                app:srcCompat="@drawable/baseline_calendar_today_24" />
 
             <TextView
                 android:id="@+id/textView5"
@@ -101,7 +101,7 @@
                 app:layout_constraintBottom_toBottomOf="@+id/imageView"
                 app:layout_constraintStart_toEndOf="@+id/textView5"
                 app:layout_constraintTop_toTopOf="@+id/imageView"
-                app:src="@drawable/baseline_access_time_24"
+                app:srcCompat="@drawable/baseline_access_time_24"
                 />
 
             <TextView
@@ -162,7 +162,7 @@
             <Button
                 android:id="@+id/button"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="55dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp"
@@ -178,7 +178,7 @@
             <Button
                 android:id="@+id/button2"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="55dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="16dp"

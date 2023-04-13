@@ -33,6 +33,7 @@ android {
         multiDexEnabled true
         minSdkVersion 16
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
 
     lintOptions {

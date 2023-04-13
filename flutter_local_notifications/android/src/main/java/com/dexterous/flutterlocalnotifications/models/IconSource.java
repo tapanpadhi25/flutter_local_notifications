@@ -8,5 +8,5 @@ public enum IconSource {
   BitmapFilePath,
   ContentUri,
   FlutterBitmapAsset,
-  ByteArray
+  ByteArray;
 }

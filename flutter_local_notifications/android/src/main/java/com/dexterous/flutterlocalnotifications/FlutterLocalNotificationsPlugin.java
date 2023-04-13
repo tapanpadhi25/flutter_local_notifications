@@ -63,7 +63,10 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.JsonRequest;
 import com.android.volley.toolbox.Volley;
 import com.dexterous.flutterlocalnotifications.isolate.IsolatePreferences;
+import com.dexterous.flutterlocalnotifications.models.AmbData;
+import com.dexterous.flutterlocalnotifications.models.AmbResult;
 import com.dexterous.flutterlocalnotifications.models.BitmapSource;
+import com.dexterous.flutterlocalnotifications.models.BookingDetailsModel;
 import com.dexterous.flutterlocalnotifications.models.DateTimeComponents;
 import com.dexterous.flutterlocalnotifications.models.IconSource;
 import com.dexterous.flutterlocalnotifications.models.MessageDetails;
@@ -1238,7 +1241,7 @@ public class FlutterLocalNotificationsPlugin
       try{
         JSONObject payload = new JSONObject(notificationDetails.payload);
         if(payload.getString("type").equals("poster")){
-          showAmbulanceReminder(context,notificationDetails,payload.getString("recordId"));
+          showAmbulanceReminder(context,notificationDetails,payload.getString("recordId"),payload.getString("cookie"));
         }else{
           Log.d("Payload", "Payload is not equal to poster");
         }
@@ -1290,14 +1293,14 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
-  private static void showAmbulanceReminder(Context ctx, NotificationDetails details, String recordId){
+  private static void showAmbulanceReminder(Context ctx, NotificationDetails details, String recordId, String cookie){
 
 
 
     SharedPreferences preferences  = ctx.getSharedPreferences("FlutterSharedPreferences",ctx.MODE_PRIVATE);
     String cookies = preferences.getString("cookie","");
 
-    if(!cookies.equals("")) {
+    if(!cookie.equals("")) {
       final RequestQueue queue = Volley.newRequestQueue(ctx);
       final String url = "https://app.hospinity.com/admin/ambulance/order/details?recordId=" + recordId;
       JsonRequest<JSONObject> request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -1305,10 +1308,10 @@ public class FlutterLocalNotificationsPlugin
         public void onResponse(JSONObject response) {
           Log.d("response", response.toString());
 
-          HashMap res = new Gson().fromJson(response.toString(),HashMap.class);
-
+          BookingDetailsModel res = new Gson().fromJson(response.toString(), BookingDetailsModel.class);
+          AmbData data = res.getData();
           try{
-            if(response.getInt("responseCode")== 109) {
+            if(data.getResponseCode()== 109) {
               WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
                       ViewGroup.LayoutParams.MATCH_PARENT,
                       ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -1333,17 +1336,17 @@ public class FlutterLocalNotificationsPlugin
               ProgressBar pgr  = inflater.findViewById(R.id.progressBar);
               TextView progressValue = inflater.findViewById(R.id.textView3);
 
-             HashMap data = (HashMap) res.get("data");
-             HashMap result = (HashMap) data.get("result");
+
+             AmbResult result =  data.getResult();
 
 
              int pickUpDateTime =0;
-             if( result.get("pickUpDateTime")!=null){
-               pickUpDateTime = (int) result.get("pickUpDateTime");
+             if( result.getPickUpDateTime()>0){
+               pickUpDateTime = (int) result.getPickUpDateTime();
 
              }
-             bookedBy.setText(result.get("userName").toString());
-             pickUp.setText(result.get("fragmentedAddress").toString());
+             bookedBy.setText(result.getUserName().toString());
+             pickUp.setText(result.getFragmentedAddress().toString());
 
               SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS");
 
@@ -1398,7 +1401,7 @@ public class FlutterLocalNotificationsPlugin
 
               });
             }
-          } catch (JSONException e) {
+          } catch (Exception e) {
             Log.e("Exception",e.getMessage());
           }
         }
@@ -1413,6 +1416,7 @@ public class FlutterLocalNotificationsPlugin
         public Map<String, String> getHeaders() throws AuthFailureError {
           Map<String, String> header = new HashMap<>();
           header.put("cookie", cookies);
+
           return header;
         }
       };
