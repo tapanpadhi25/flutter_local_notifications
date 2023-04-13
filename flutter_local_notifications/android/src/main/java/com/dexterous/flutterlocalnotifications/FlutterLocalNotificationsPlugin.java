@@ -228,6 +228,8 @@ public class FlutterLocalNotificationsPlugin
   private PermissionRequestListener callback;
   private boolean permissionRequestInProgress = false;
 
+  private static final String SAVE_COOKIES_FOR_REMINDER = "saveCookies";
+
   static void rescheduleNotifications(Context context) {
     ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
     for (NotificationDetails notificationDetails : scheduledNotifications) {
@@ -1293,8 +1295,8 @@ public class FlutterLocalNotificationsPlugin
   private static void showAmbulanceReminder(Context ctx, NotificationDetails details, String recordId, String cookie) {
 
 
-    SharedPreferences preferences = ctx.getSharedPreferences("FlutterSharedPreferences", ctx.MODE_PRIVATE);
-    String cookies = preferences.getString("cookie", "");
+    SharedPreferences preferences = ctx.getSharedPreferences("CookiesPreference", Context.MODE_PRIVATE);
+    String cookies = preferences.getString("savedCookies", "");
 
     if (!cookie.equals("")) {
       final RequestQueue queue = Volley.newRequestQueue(ctx);
@@ -1720,10 +1722,23 @@ public class FlutterLocalNotificationsPlugin
       case STOP_FOREGROUND_SERVICE:
         stopForegroundService(result);
         break;
+      case SAVE_COOKIES_FOR_REMINDER:
+        saveCookies(call,result);
+        break;
       default:
         result.notImplemented();
         break;
     }
+  }
+
+  private void saveCookies(MethodCall call ,MethodChannel.Result result) {
+  final Object cookie =   call.arguments;
+
+  SharedPreferences preferences = mainActivity.getSharedPreferences("CookiesPreference", Context.MODE_PRIVATE);
+  final SharedPreferences.Editor edit = preferences.edit();
+  edit.putString("savedCookies", cookie.toString());
+  edit.apply();
+
   }
 
   private void pendingNotificationRequests(Result result) {
