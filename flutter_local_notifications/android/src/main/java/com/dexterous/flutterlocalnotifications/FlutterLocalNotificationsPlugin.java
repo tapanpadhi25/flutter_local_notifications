@@ -109,10 +109,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -1301,7 +1304,7 @@ public class FlutterLocalNotificationsPlugin
       try {
         JSONObject body = new JSONObject();
         body.put("recordId",recordId);
-        JsonRequest<JSONObject> request = new JsonObjectRequest(url, new Response.Listener<JSONObject>() {
+        JsonRequest<JSONObject> request = new JsonObjectRequest(Request.Method.POST,url, body, new Response.Listener<JSONObject>() {
           @Override
           public void onResponse(JSONObject response) {
             Log.d("response", response.toString());
@@ -1330,8 +1333,8 @@ public class FlutterLocalNotificationsPlugin
                 TextView bookedOn = inflater.findViewById(R.id.textView5);
                 TextView bookingTime = inflater.findViewById(R.id.textView6);
                 TextView pickUp = inflater.findViewById(R.id.textView8);
-                ProgressBar pgr = inflater.findViewById(R.id.progressBar);
-                TextView progressValue = inflater.findViewById(R.id.textView3);
+//                ProgressBar pgr = inflater.findViewById(R.id.progressBar);
+//                TextView progressValue = inflater.findViewById(R.id.textView3);
 
 
                 AmbResult result = data.getResult();
@@ -1344,31 +1347,40 @@ public class FlutterLocalNotificationsPlugin
                 }
                 bookedBy.setText(result.getUserName().toString());
                 pickUp.setText(result.getFragmentedAddress().toString());
+                Date date = new Date(pickUpDateTime*1000);
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS", Locale.getDefault());
+                formatter.setTimeZone(TimeZone.getDefault());
 
-                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS");
-
-                // Create a calendar object that will convert the date and time value in milliseconds to date.
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTimeInMillis(pickUpDateTime);
-                String format = formatter.format(calendar.getTime());
+                String format = formatter.format(date);
                 bookedOn.setText(pickUpDateTime == 0 ? "N/A" : format.split(" ")[0]);
                 bookingTime.setText(pickUpDateTime == 0 ? "N/A" : format.split(" ")[1]);
                 Button acceptBooking = inflater.findViewById(R.id.button);
                 Button cancelBooking = inflater.findViewById(R.id.button2);
-                final int[] pgrVal = {30};
-                final int[] p = {0};
-                pgr.setMax(30);
-                new Timer().schedule(new TimerTask() {
-                  @Override
-                  public void run() {
-                    if (pgrVal[0] > 0) {
-                      pgrVal[0] -= 1;
-                      p[0] += 1;
-                      progressValue.setText(p[0] + "");
-                      pgr.setProgress(p[0]);
-                    }
-                  }
-                }, 1000);
+//                final int[] pgrVal = {30};
+//                final int[] p = {0};
+//                pgr.setMax(30);
+//                new Timer().schedule(new TimerTask() {
+//                  @Override
+//                  public void run() {
+//                    if (pgrVal[0] > 0) {
+//                      pgrVal[0] -= 1;
+//                      p[0] += 1;
+//
+//                      Activity activity = (Activity) ctx.getApplicationContext().;
+//                      activity.runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                          progressValue.setText(p[0]+"");
+//                          pgr.setProgress(p[0]);
+//                        }
+//                      });
+//                    }
+//                  }
+//                }, 1000);
+//
+
+
+
                 acceptBooking.setOnClickListener(new View.OnClickListener() {
                   @Override
                   public void onClick(View view) {
@@ -1449,7 +1461,7 @@ public class FlutterLocalNotificationsPlugin
      body.put("status", status);
      body.put("recordId",recordId);
 
-     JsonRequest<JSONObject> request = new JsonObjectRequest( api, new Response.Listener<JSONObject>() {
+     JsonRequest<JSONObject> request = new JsonObjectRequest(Request.Method.POST ,api, body,new Response.Listener<JSONObject>() {
        @Override
        public void onResponse(JSONObject response) {
           Log.d("AcceptReject",response.toString());
